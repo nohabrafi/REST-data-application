@@ -1,0 +1,8 @@
+.vscode
+node_modules
+.dockerignore
+feladat leiras.pdf
+test_groups.json
+testjson.json
+app/src/data_OUT.json
+app/src/data_IN.json

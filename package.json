@@ -1,0 +1,16 @@
+{
+    "name": "lexunit-probafeladat",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "author": "",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.2",
+        "mongodb": "^4.5.0",
+        "mongoose": "^6.2.10"
+    }
+}

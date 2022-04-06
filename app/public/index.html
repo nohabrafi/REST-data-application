@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        /* The sidebar menu */
+        
+        .sidenav {
+            height: 100%;
+            /* Full-height: remove this if you want "auto" height */
+            width: 160px;
+            /* Set the width of the sidebar */
+            position: fixed;
+            /* Fixed Sidebar (stay in place on scroll) */
+            z-index: 1;
+            /* Stay on top */
+            top: 0;
+            /* Stay at the top */
+            left: 0;
+            background-color: #111;
+            /* Black */
+            overflow-x: hidden;
+            /* Disable horizontal scroll */
+            padding-top: 20px;
+        }
+        
+        .btn-success {
+            margin-top: 10px;
+        }
+        
+        .main {
+            margin-top: 20px;
+            margin-left: 180px;
+            padding: 10px 10px 10px 10px;
+            overflow: hidden;
+        }
+        
+        .input {
+            float: left;
+            width: 50%;
+        }
+        
+        .output {
+            /* border: solid rgb(243, 21, 5) 3px; */
+            height: 800px;
+            float: right;
+            position: relative;
+            width: 50%;
+        }
+        
+        .embeddings {
+            /* border: solid rgb(12, 116, 235) 3px; */
+            overflow: hidden;
+            margin-bottom: 100px;
+        }
+        
+        .draggable {
+            /* border: #111 solid 1px; */
+            cursor: move;
+            float: left;
+            margin: 10px;
+            background-color: royalblue;
+            color: aliceblue;
+        }
+        
+        .result {
+            /* border: #111 solid 1px; */
+            float: left;
+            margin: 10px;
+            background-color: rgb(248, 185, 12);
+        }
+        
+        .draggable.dragging {
+            opacity: .5;
+        }
+        
+        .groups {
+            overflow: hidden;
+        }
+        
+        .draggables-container {
+            min-width: 150px;
+            min-height: 200px;
+            float: left;
+            margin-left: 10px;
+        }
+        
+        .result-container {
+            min-width: 150px;
+            min-height: 200px;
+            float: left;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidenav">
+        <button type="button" class="btn btn-primary" id="kezdeti_adatok_sidenav" href="">Kezdeti adatok generálása</button>
+        <button style="width: 100%;" type="button" class="btn btn-primary" id="eredmeny_sidenav" href="">Eredmény</button>
+    </div>
+    <div class="main">
+        <div class="input">
+            <div id="kezdeti_adatok_div" style="display: block;">
+                <form id="kezdeti_adatok_form">
+                    <br>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Random seed</span>
+                        <input name="random_seed" value="11" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Embedding-ek száma</span>
+                        <input name="embedding_szam" value="8" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Embedding-ek hossza</span>
+                        <input name="embedding_hossz" value="4" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Vektorhalmazok száma</span>
+                        <input name="halmazok_szama" value="3" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Threshold érték</span>
+                        <input name="threshold" value="4.5" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                    </div>
+
+                    <button id="generalas" type="button" class="btn btn-success">Embedding-ek generálása</button>
+                    <button id="futtatas" type="button" class="btn btn-success">Újraklaszterezés futtatása</button>
+                </form>
+            </div>
+
+            <button id="eredmeny_lekerdezese" style="display: none;" type="button" class="btn btn-secondary">Eredmény lekérdezése</button>
+
+        </div>
+        <div class="output" style="display: none;">
+            <div class="embeddings"></div>
+            <div class="groups"></div>
+            <div id="eredmeny_div" style="display: none;"></div>
+        </div>
+    </div>
+    <!-- pseudo random number generator; https://github.com/davidbau/seedrandom -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js">
+    </script>
+    <script type="text/javascript" defer>
+        let kezdeti_adatok_sidenav = document.getElementById("kezdeti_adatok_sidenav");
+        let eredmeny_sidenav = document.getElementById("eredmeny_sidenav");
+        let eredmeny_div = document.getElementById("eredmeny_div")
+        let form = document.getElementById("kezdeti_adatok_form");
+        let eredmeny_lekerdezese = document.getElementById("eredmeny_lekerdezese");
+        let generalas = document.getElementById("generalas");
+        let futtatas = document.getElementById("futtatas");
+        let output_div = document.querySelector(".output");
+        let embeddings_div = document.querySelector(".embeddings");
+        let groups_div = document.querySelector(".groups");
+        let threshold;
+
+        kezdeti_adatok_sidenav.addEventListener("click", e => {
+            kezdeti_adatok_div.style.display = "block";
+            eredmeny_div.style.display = "none";
+            output_div.style.display = "block";
+            eredmeny_lekerdezese.style.display = "none";
+            embeddings_div.style.display = "block";
+            groups_div.style.display = "block";
+        });
+        eredmeny_sidenav.addEventListener("click", e => {
+            kezdeti_adatok_div.style.display = "none";
+            eredmeny_div.style.display = "block";
+            output_div.style.display = "block";
+            eredmeny_lekerdezese.style.display = "block";
+            embeddings_div.style.display = "none";
+            groups_div.style.display = "none";
+        });
+        eredmeny_lekerdezese.addEventListener("click", eredmenyLekerese);
+        generalas.addEventListener("click", generalasInditasa);
+        futtatas.addEventListener("click", futtatasInditasa);
+
+        async function eredmenyLekerese() {
+
+            eredmeny_div.innerHTML = "";
+            // request data from the server
+            let response = await fetch('/data'); //wait for response
+            let reqData = await response.json(); // convert response to json
+            if (reqData.errormessage) {
+                console.log(reqData.err);
+                return;
+            }
+            console.log(reqData.message);
+            let actualData = reqData.data;
+            let groups = Object.keys(actualData);
+
+            groups.forEach(group => { // group = property name in object (group_1, group_2...)
+
+                // div header
+                let div_header = document.createElement('div');
+                div_header.classList.add('card-header');
+                div_header.innerHTML = group;
+                // group div
+                let group_div = document.createElement('div');
+                group_div.classList.add('result-container');
+                group_div.classList.add('card');
+                group_div.classList.add('text-white');
+                group_div.classList.add('bg-success');
+                group_div.classList.add('mb-3');
+                group_div.appendChild(div_header);
+                eredmeny_div.appendChild(group_div);
+
+                actualData[group].forEach(element => {
+                    let div = document.createElement('div');
+                    div.classList.add('result');
+                    div.classList.add('alert');
+                    div.classList.add('alert-dark');
+                    div.innerText = element;
+                    group_div.appendChild(div);
+                });
+            });
+        }
+
+        function getRndNumber(min, max, rng) {
+            return (rng() * (max - min) + min).toFixed(1);
+        }
+
+        // add eventlisteners to the draggable alements and its containters
+        function addDragginEvListeners() {
+            const draggables = document.querySelectorAll('.draggable');
+            const draggables_containers = document.querySelectorAll('.draggables-container, .embeddings');
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                });
+            });
+            draggables_containers.forEach(container => {
+                container.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const draggable = document.querySelector('.dragging');
+                    container.appendChild(draggable);
+                });
+            });
+        }
+
+        function generalasInditasa() {
+
+            embeddings_div.innerHTML = ""; // clear embeddings
+            groups_div.innerHTML = ""; // clear groups
+            let formData = new FormData(form); // get the form's data 
+            let rng = new alea(formData.get("random_seed"));
+            let embeddingContent = [];
+
+            // create embeddings
+            for (let i = 0; i < formData.get("embedding_szam"); i++) {
+
+                for (let j = 0; j < formData.get("embedding_hossz"); j++) {
+                    let prnd = parseFloat(getRndNumber(-1, 1, rng));
+                    embeddingContent.push(prnd);
+                }
+
+                let div = document.createElement('div');
+                div.classList.add('draggable');
+                div.classList.add('alert');
+                div.classList.add('alert-dark');
+                div.draggable = "true";
+                div.innerText = embeddingContent;
+                embeddings_div.appendChild(div);
+                embeddingContent = [];
+            }
+
+            // create groups
+            for (let i = 0; i < formData.get("halmazok_szama"); i++) {
+                // div header
+                let div_header = document.createElement('div');
+                div_header.classList.add('card-header');
+                div_header.innerText = "group_" + (i + 1);
+                // group div
+                let group_div = document.createElement('div');
+                group_div.appendChild(div_header);
+                group_div.classList.add('draggables-container');
+                group_div.classList.add('card');
+                group_div.classList.add('text-white');
+                group_div.classList.add('bg-secondary');
+                group_div.classList.add('mb-3');
+                groups_div.appendChild(group_div);
+                embeddingContent = [];
+            }
+            addDragginEvListeners(); // add event listeners
+            output_div.style.display = "block"; // show output div
+        }
+
+        async function futtatasInditasa() {
+            const draggables_containers = document.querySelectorAll('.draggables-container'); // get groups
+            let data = {}; // data object containing groups and threshold
+            data["groups"] = {}; // array that contains the groups
+            data["threshold"] = new FormData(form).get("threshold"); // field that contains threshold value
+            data["timestamp"] = Date(Date.now()); // timestamp
+
+            // for each group
+            draggables_containers.forEach(container => {
+                // get name of the group
+                let group_name = container.querySelector(".card-header").innerText;
+                // add an empty array to the group_x field
+                data["groups"][group_name] = [];
+                // get all draggable elements (embeddings)
+                let draggables = container.querySelectorAll('.draggable');
+                // for each embedding
+                draggables.forEach(draggable => {
+                    let draggableArray = draggable.innerText.split(","); // get each number separated by ,
+                    // convert each string number to actual numbers with map, and push the result to the corresponding group 
+                    data["groups"][group_name].push(draggableArray.map(number => parseFloat(number)));
+                });
+            });
+            console.log(JSON.stringify(data));
+
+            const response = await fetch('/data', {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const responseText = await response.text();
+            console.log(responseText);
+        }
+    </script>
+</body>
+
+</html>
