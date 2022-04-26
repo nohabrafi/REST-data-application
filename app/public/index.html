@@ -101,88 +101,89 @@
 
 <body>
     <div class="sidenav">
-        <button type="button" class="btn btn-primary" id="kezdeti_adatok_sidenav" href="">Kezdeti adatok generálása</button>
-        <button style="width: 100%;" type="button" class="btn btn-primary" id="eredmeny_sidenav" href="">Eredmény</button>
+        <button type="button" class="btn btn-primary" id="startValues_sidenav" href="">Generate start values</button>
+        <button style="width: 100%;" type="button" class="btn btn-primary" id="result_sidenav" href="">Show result</button>
     </div>
     <div class="main">
         <div class="input">
-            <div id="kezdeti_adatok_div" style="display: block;">
-                <form id="kezdeti_adatok_form">
+            <div id="startValues_container" style="display: block;">
+                <form id="startValues_form">
                     <br>
                     <div class="input-group mb-3">
                         <span class="input-group-text" id="inputGroup-sizing-default">Random seed</span>
                         <input name="random_seed" value="11" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-default">Embedding-ek száma</span>
-                        <input name="embedding_szam" value="8" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Number of arrays</span>
+                        <input name="number_of_arrays" value="8" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-default">Embedding-ek hossza</span>
-                        <input name="embedding_hossz" value="4" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Length of the arrays</span>
+                        <input name="length_of_the_arrays" value="4" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-default">Vektorhalmazok száma</span>
-                        <input name="halmazok_szama" value="3" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Number of groups</span>
+                        <input name="number_of_groups" value="3" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
                     </div>
                     <div class="input-group mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-default">Threshold érték</span>
+                        <span class="input-group-text" id="inputGroup-sizing-default">Threshold</span>
                         <input name="threshold" value="4.5" style="flex: none; min-width: 80px;" type="number" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
                     </div>
 
-                    <button id="generalas" type="button" class="btn btn-success">Embedding-ek generálása</button>
-                    <button id="futtatas" type="button" class="btn btn-success">Újraklaszterezés futtatása</button>
+                    <button id="generate_arrays" type="button" class="btn btn-success">Generate arrays</button>
+                    <button id="start_reclustering" type="button" class="btn btn-success">Start reclustering</button>
                 </form>
             </div>
 
-            <button id="eredmeny_lekerdezese" style="display: none;" type="button" class="btn btn-secondary">Eredmény lekérdezése</button>
+            <button id="get_results" style="display: none;" type="button" class="btn btn-secondary">Get results</button>
 
         </div>
         <div class="output" style="display: none;">
             <div class="embeddings"></div>
             <div class="groups"></div>
-            <div id="eredmeny_div" style="display: none;"></div>
+            <div id="result_container" style="display: none;"></div>
         </div>
     </div>
     <!-- pseudo random number generator; https://github.com/davidbau/seedrandom -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js">
     </script>
     <script type="text/javascript" defer>
-        let kezdeti_adatok_sidenav = document.getElementById("kezdeti_adatok_sidenav");
-        let eredmeny_sidenav = document.getElementById("eredmeny_sidenav");
-        let eredmeny_div = document.getElementById("eredmeny_div")
-        let form = document.getElementById("kezdeti_adatok_form");
-        let eredmeny_lekerdezese = document.getElementById("eredmeny_lekerdezese");
-        let generalas = document.getElementById("generalas");
-        let futtatas = document.getElementById("futtatas");
+        let startValues_sidenav = document.getElementById("startValues_sidenav");
+        let startValues_container = document.getElementById("startValues_container");
+        let result_sidenav = document.getElementById("result_sidenav");
+        let result_container = document.getElementById("result_container")
+        let startValues_form = document.getElementById("startValues_form");
+        let get_results = document.getElementById("get_results");
+        let generate_arrays = document.getElementById("generate_arrays");
+        let start_reclustering = document.getElementById("start_reclustering");
         let output_div = document.querySelector(".output");
         let embeddings_div = document.querySelector(".embeddings");
         let groups_div = document.querySelector(".groups");
         let threshold;
 
-        kezdeti_adatok_sidenav.addEventListener("click", e => {
-            kezdeti_adatok_div.style.display = "block";
-            eredmeny_div.style.display = "none";
+        startValues_sidenav.addEventListener("click", e => {
+            startValues_container.style.display = "block";
+            result_container.style.display = "none";
             output_div.style.display = "block";
-            eredmeny_lekerdezese.style.display = "none";
+            get_results.style.display = "none";
             embeddings_div.style.display = "block";
             groups_div.style.display = "block";
         });
-        eredmeny_sidenav.addEventListener("click", e => {
-            kezdeti_adatok_div.style.display = "none";
-            eredmeny_div.style.display = "block";
+        result_sidenav.addEventListener("click", e => {
+            startValues_container.style.display = "none";
+            result_container.style.display = "block";
             output_div.style.display = "block";
-            eredmeny_lekerdezese.style.display = "block";
+            get_results.style.display = "block";
             embeddings_div.style.display = "none";
             groups_div.style.display = "none";
         });
-        eredmeny_lekerdezese.addEventListener("click", eredmenyLekerese);
-        generalas.addEventListener("click", generalasInditasa);
-        futtatas.addEventListener("click", futtatasInditasa);
+        get_results.addEventListener("click", getResults);
+        generate_arrays.addEventListener("click", generateArrays);
+        start_reclustering.addEventListener("click", startReclustering);
 
-        async function eredmenyLekerese() {
+        async function getResults() {
 
-            eredmeny_div.innerHTML = "";
+            result_container.innerHTML = "";
             // request data from the server
             let response = await fetch('/data'); //wait for response
             let reqData = await response.json(); // convert response to json
@@ -208,7 +209,7 @@
                 group_div.classList.add('bg-success');
                 group_div.classList.add('mb-3');
                 group_div.appendChild(div_header);
-                eredmeny_div.appendChild(group_div);
+                result_container.appendChild(group_div);
 
                 actualData[group].forEach(element => {
                     let div = document.createElement('div');
@@ -248,18 +249,18 @@
             });
         }
 
-        function generalasInditasa() {
+        function generateArrays() {
 
             embeddings_div.innerHTML = ""; // clear embeddings
             groups_div.innerHTML = ""; // clear groups
-            let formData = new FormData(form); // get the form's data 
+            let formData = new FormData(startValues_form); // get the form's data 
             let rng = new alea(formData.get("random_seed"));
             let embeddingContent = [];
 
             // create embeddings
-            for (let i = 0; i < formData.get("embedding_szam"); i++) {
+            for (let i = 0; i < formData.get("number_of_arrays"); i++) {
 
-                for (let j = 0; j < formData.get("embedding_hossz"); j++) {
+                for (let j = 0; j < formData.get("length_of_the_arrays"); j++) {
                     let prnd = parseFloat(getRndNumber(-1, 1, rng));
                     embeddingContent.push(prnd);
                 }
@@ -275,7 +276,7 @@
             }
 
             // create groups
-            for (let i = 0; i < formData.get("halmazok_szama"); i++) {
+            for (let i = 0; i < formData.get("number_of_groups"); i++) {
                 // div header
                 let div_header = document.createElement('div');
                 div_header.classList.add('card-header');
@@ -295,11 +296,11 @@
             output_div.style.display = "block"; // show output div
         }
 
-        async function futtatasInditasa() {
+        async function startReclustering() {
             const draggables_containers = document.querySelectorAll('.draggables-container'); // get groups
             let data = {}; // data object containing groups and threshold
             data["groups"] = {}; // array that contains the groups
-            data["threshold"] = new FormData(form).get("threshold"); // field that contains threshold value
+            data["threshold"] = new FormData(startValues_form).get("threshold"); // field that contains threshold value
             data["timestamp"] = Date(Date.now()); // timestamp
 
             // for each group

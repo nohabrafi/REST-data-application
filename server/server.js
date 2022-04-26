@@ -6,6 +6,14 @@ const connectionString = "mongodb+srv://Rafi:flatout2@cluster0.okuhf.mongodb.net
 var MongoClient = require('mongodb').MongoClient;
 var db;
 let error_msg = "";
+let isWin = false;
+
+// detect system platform to use the appropriate path
+if (process.platform === "win32") {
+    isWin = true;
+}
+console.log(process.platform);
+console.log(isWin);
 
 app.use(express.json());
 
@@ -24,9 +32,16 @@ MongoClient.connect(connectionString, function(err, client) {
 
 app.get("/", (req, res) => {
 
-    // res.sendFile('/public/index.html', { root: '../app' }); // local
-    res.sendFile('./public/index.html', { root: './app' }); // dockercontainer
-
+    let pathToMyFile;
+    let root;
+    if (isWin) {
+        pathToMyFile = '/public/index.html'; // on windows
+        root = '../app';
+    } else {
+        pathToMyFile = './public/index.html'; // dockercontainer
+        root = './app';
+    }
+    res.sendFile(pathToMyFile, { root: root });
 });
 
 app.post('/data', (req, res) => {
@@ -36,15 +51,28 @@ app.post('/data', (req, res) => {
     if (validateIncomingJSON(data.groups)) {
         let json = JSON.stringify(data.groups);
         //save data to file
-        // fs.writeFile("../app/src/data_IN.json", json, (err) => { // local
-        fs.writeFile("./app/src/data_IN.json", json, (err) => { // dockercontainer
+        let pathToMyFile;
+        if (isWin) {
+            pathToMyFile = '../app/src/data_IN.json'; // on windows
+        } else {
+            pathToMyFile = './app/src/data_IN.json'; // dockercontainer
+        }
+        fs.writeFile(pathToMyFile, json, (err) => { // local
+            // fs.writeFile("./app/src/data_IN.json", json, (err) => { // dockercontainer
             if (err) {
                 console.log(err);
             }
             console.log("parent process: incoming json data saved in 'data_IN.json' for processing, calling compute.js!");
 
-            // const childProcess = fork('../app/src/compute.js'); // local
-            const childProcess = fork('./app/src/compute.js'); // dockercontiner
+            let pathToComputejs;
+            if (isWin) {
+                pathToComputejs = '../app/src/compute.js'; // on windows
+            } else {
+                pathToComputejs = './app/src/compute.js'; // dockercontainer
+            }
+
+            const childProcess = fork(pathToComputejs); // local
+            // const childProcess = fork('./app/src/compute.js'); // dockercontiner
             childProcess.send({ threshold: data.threshold });
             childProcess.on('error', (err) => console.log(err));
             childProcess.on('message', (message) => {
@@ -58,10 +86,10 @@ app.post('/data', (req, res) => {
         // save incoming data to mongoDB
         db.collection('data_IN').insertOne(data, function(err, inserted) {
             if (err) {
-                res.send('Adatok elfogadva, de hiba a mongoDB-be mentésnél!' + err);
+                res.send('Data accepted, but could not save to MongoDB!' + err);
                 console.log(err);
             } else {
-                res.send('Adatok elfogadva, és mentve mongoDB-be! id: ' + inserted.insertedId);
+                res.send('Data accepted and saved to MongoDB with id: ' + inserted.insertedId + '!');
                 console.log("Data saved! id: " + inserted.insertedId);
             }
         });
@@ -72,11 +100,18 @@ app.post('/data', (req, res) => {
 
 app.get('/data', (req, res) => {
 
-    // fs.readFile('../app/src/data_OUT.json', (err, data) => { // local
-    fs.readFile('./app/src/data_OUT.json', (err, data) => { // dockercontainer
+    let pathToMyFile;
+    if (isWin) {
+        pathToMyFile = '../app/src/data_OUT.json'; // on windows
+    } else {
+        pathToMyFile = './app/src/data_OUT.json'; // dockercontainer
+    }
+
+    fs.readFile(pathToMyFile, (err, data) => { // local
+        // fs.readFile('./app/src/data_OUT.json', (err, data) => { // dockercontainer
         if (err) {
             console.log("The file does not exist.");
-            res.send({ hiba: "Nincs eredmény!" })
+            res.send({ hiba: "no result, the file does not exist!" })
         } else {
             let dataToSave = {};
             dataToSave["groups"] = JSON.parse(data);
@@ -85,10 +120,10 @@ app.get('/data', (req, res) => {
             // save result data to mongoDB
             db.collection('data_OUT').insertOne(dataToSave, function(err, inserted) {
                 if (err) {
-                    res.send({ "errormessage": "Hiba az eredmény mongoDB-be mentésnél!", "error": err });
+                    res.send({ "errormessage": "Error while saving to MongoDB!", "error": err });
                     console.log(err);
                 } else {
-                    res.send({ "message": "Eredmény mentve mongoDB-be!", "data": JSON.parse(data) });
+                    res.send({ "message": "Result saved to MongoDB!", "data": JSON.parse(data) });
                     console.log("Data saved! id: " + inserted.insertedId);
                 }
             });

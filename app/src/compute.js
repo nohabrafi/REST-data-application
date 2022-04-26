@@ -11,11 +11,10 @@ process.on("message", message => {
     // detect system for appropriate command
     if (process.platform === "win32") {
         command = `wsl ../app/src/lexunit-exercise-windows-amd64 "$(cat ../app/src/data_IN.json)" ${message.threshold}`;
-        // command = 'wsl pwd';
     } else {
         command = `./app/src/lexunit-exercise-linux-amd64 "$(cat ./app/src/data_IN.json)" ${message.threshold}`;
     }
-
+    // run the algorithm
     const linuxBinFile = exec(command, (error, stdout, stderror) => {
         if (error) {
             process.send(error.stack);
@@ -27,14 +26,15 @@ process.on("message", message => {
             return;
         }
         console.log(stdout);
-        outputString = stdout;
+        outputString = stdout; // save output of algorithm to a variable
     });
 
+    // when algorithm done
     linuxBinFile.on('close', function(code) {
         process.send(`\nchild process: Output of algorithm:\n\n${outputString}\n`);
         process.send('child process: Child process exited with exit code ' + code);
         process.send('child process: saving results...');
-
+        // get json part from result string
         let jsonFromString = outputString.substring(outputString.indexOf("{"));
         // write result json to file which can be sent back
         fs.writeFile(__dirname + "/data_OUT.json", jsonFromString, (err) => {
